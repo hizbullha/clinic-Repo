@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useAppointments } from '../context/useContextHooks'; 
-import { STATUS } from '../context/AuthTypes'; 
+import { useAppointments } from '../context/useContextHooks';
+import { STATUS } from '../context/AuthTypes';
 import { X, ChevronRight } from 'lucide-react';
 
 const AppointmentForm = ({ onClose, existing }) => {
@@ -10,21 +10,15 @@ const AppointmentForm = ({ onClose, existing }) => {
   const [loadingDoctors, setLoadingDoctors] = useState(true);
   const [error, setError] = useState('');
 
-  // 🟢 NEW FILTER STATE
-  const [selectedSpecialty, setSelectedSpecialty] = useState('ALL');
-
   const [formData, setFormData] = useState({
-    doctorId: existing ? existing.doctorId : '',
-    date: existing ? existing.date : '',
-    time: existing ? existing.time : '',
-    reason: existing ? existing.reason : '',
+    doctorId: '',
+    date: '',
+    time: '',
+    reason: ''
   });
 
-  /**
-   * FETCH DOCTORS
-   */
   useEffect(() => {
-    const fetchSystemDoctors = async () => {
+    const fetchDoctors = async () => {
       const token = localStorage.getItem('clinic_jwt_token');
 
       try {
@@ -34,51 +28,46 @@ const AppointmentForm = ({ onClose, existing }) => {
           'http://localhost:5000/api/auth/doctors',
           {
             method: 'GET',
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
         );
 
-        if (response.ok) {
-          const data = await response.json();
-          setActiveDoctors(data);
-
-          if (!existing && data.length > 0) {
-            setFormData(prev => ({
-              ...prev,
-              doctorId: data[0].id
-            }));
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch doctors');
         }
+
+        const data = await response.json();
+        setActiveDoctors(data || []);
+
+        // only set default if creating new appointment
+        if (!existing && data && data.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            doctorId: data[0].id
+          }));
+        }
+
       } catch (err) {
-        console.error('Failed to load doctors:', err);
+        console.error(err);
+        setError('Unable to load doctors.');
       } finally {
         setLoadingDoctors(false);
       }
     };
 
-    fetchSystemDoctors();
+    fetchDoctors();
   }, [existing]);
-
-  /**
-   * 🟢 FILTER LOGIC
-   */
-  const filteredDoctors =
-    selectedSpecialty === 'ALL'
-      ? activeDoctors
-      : activeDoctors.filter(
-          d =>
-            (d.specialty || 'General Physician') ===
-            selectedSpecialty
-        );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (
+      !formData.doctorId ||
       !formData.date ||
       !formData.time ||
-      !formData.doctorId ||
       !formData.reason.trim()
     ) {
       setError('Please fill out all fields.');
@@ -92,30 +81,33 @@ const AppointmentForm = ({ onClose, existing }) => {
       appointmentTime: formData.time
     };
 
-    if (existing) {
-      const result = await updateAppointmentStatus(existing.id, {
-        status: STATUS.COMPLETED
-      });
+    try {
+      if (existing) {
+        const result = await updateAppointmentStatus(existing.id, {
+          status: STATUS.COMPLETED
+        });
 
-      if (result.success) onClose();
-      else setError(result.error);
-    } else {
-      const result = await bookAppointment(payload);
+        if (result.success) onClose();
+        else setError(result.error || 'Update failed');
+      } else {
+        const result = await bookAppointment(payload);
 
-      if (result.success) onClose();
-      else setError(result.error);
-    }
+        if (result.success) onClose();
+        else setError(result.error || 'Booking failed');
+      }
+ } catch {
+  setError('Unable to load doctors.');
+  setLoadingDoctors(false);
+}
   };
 
   return (
     <div className="modal-backdrop">
       <div className="modal-card" style={{ maxWidth: '460px' }}>
         <div className="modal-header">
-          <div>
-            <h2 className="modal-title">
-              {existing ? 'Update Status' : 'Book Appointment'}
-            </h2>
-          </div>
+          <h2 className="modal-title">
+            {existing ? 'Update Status' : 'Book Appointment'}
+          </h2>
 
           <button onClick={onClose} className="icon-btn">
             <X size={18} />
@@ -137,43 +129,10 @@ const AppointmentForm = ({ onClose, existing }) => {
             gap: '14px'
           }}
         >
-          {/* 🟢 SPECIALTY FILTER */}
-          {!existing && (
-            <div className="form-group">
-              <label className="form-label">
-                Filter by Specialty
-              </label>
-
-              <select
-                className="form-control"
-                value={selectedSpecialty}
-                onChange={e =>
-                  setSelectedSpecialty(e.target.value)
-                }
-              >
-                <option value="ALL">All Specialties</option>
-                <option value="General Physician">
-                  General Physician
-                </option>
-                <option value="Dermatologist">
-                  Dermatologist
-                </option>
-                <option value="Pediatrician">
-                  Pediatrician
-                </option>
-                <option value="Orthopedic">
-                  Orthopedic
-                </option>
-              </select>
-            </div>
-          )}
-
           {/* DOCTOR SELECT */}
           {!existing && (
             <div className="form-group">
-              <label className="form-label">
-                Select Practitioner
-              </label>
+              <label className="form-label">Select Practitioner</label>
 
               <select
                 className="form-control"
@@ -188,14 +147,14 @@ const AppointmentForm = ({ onClose, existing }) => {
               >
                 {loadingDoctors ? (
                   <option>Loading doctors...</option>
-                ) : filteredDoctors.length > 0 ? (
-                  filteredDoctors.map(d => (
+                ) : activeDoctors.length > 0 ? (
+                  activeDoctors.map(d => (
                     <option key={d.id} value={d.id}>
                       {d.name} ({d.specialty})
                     </option>
                   ))
                 ) : (
-                  <option>No doctors found</option>
+                  <option>No doctors available</option>
                 )}
               </select>
             </div>
@@ -252,7 +211,8 @@ const AppointmentForm = ({ onClose, existing }) => {
             type="submit"
             className="btn btn-primary"
             disabled={
-              !existing && filteredDoctors.length === 0
+              loadingDoctors ||
+              (!existing && activeDoctors.length === 0)
             }
           >
             {existing ? 'Complete' : 'Book'}
