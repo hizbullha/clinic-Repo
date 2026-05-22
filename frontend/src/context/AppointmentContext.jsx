@@ -1,6 +1,5 @@
-// frontend/src/context/AppointmentContext.jsx
 import { useState, useCallback } from 'react';
-import { AppointmentContext } from './ContextInstances'; // 🟢 Sourced from instances
+import { AppointmentContext } from './ContextInstances'; 
 
 export const AppointmentProvider = ({ children }) => {
   const [appointments, setAppointments] = useState([]);

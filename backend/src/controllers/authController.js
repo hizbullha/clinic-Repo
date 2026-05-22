@@ -2,16 +2,12 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { AppDataSource } from '../config/data-source.js';
 
-/**
- * REGISTER USER (PATIENT / DOCTOR / ADMIN SAFE)
- */
+
+ // REGISTER USER (PATIENT / DOCTOR SAFE)
 export const register = async (req, res) => {
   const { username, password, name, role } = req.body;
 
   try {
-    // ----------------------------
-    // VALIDATION
-    // ----------------------------
     if (!username || !password || !name) {
       return res.status(400).json({
         message: "Username, password, and name are required"
@@ -26,55 +22,39 @@ export const register = async (req, res) => {
 
     const cleanUsername = username.trim().toLowerCase();
 
-    // ----------------------------
-    // ROLE SAFETY (PREVENT FAKE ADMIN ESCALATION)
-    // ----------------------------
+    // Only allow safe roles (no admin self-registration)
     const allowedRoles = ["PATIENT", "DOCTOR"];
 
     const finalRole = allowedRoles.includes(role?.toUpperCase())
       ? role.toUpperCase()
       : "PATIENT";
 
-    // ----------------------------
-    // CHECK IF USER EXISTS
-    // ----------------------------
+    // Check if user exists
     const userCheck = await AppDataSource.query(
       'SELECT id FROM users WHERE username = $1',
       [cleanUsername]
     );
 
-    // Syntax/Safety Check for varying DB driver return types
     const existingUser = userCheck?.rows || userCheck;
+
     if (existingUser.length > 0) {
       return res.status(400).json({
         message: "Username already exists"
       });
     }
 
-    // ----------------------------
-    // HASH PASSWORD
-    // ----------------------------
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // ----------------------------
-    // INSERT USER
-    // ----------------------------
     const insertResult = await AppDataSource.query(
       `
       INSERT INTO users (username, password_hash, name, role)
       VALUES ($1, $2, $3, $4)
       RETURNING id, username, name, role
       `,
-      [
-        cleanUsername,
-        passwordHash,
-        name,
-        finalRole
-      ]
+      [cleanUsername, passwordHash, name, finalRole]
     );
 
-    // Handle database driver response differences safely
     const createdUser = insertResult?.rows?.[0] || insertResult[0];
 
     return res.status(201).json({
@@ -92,10 +72,10 @@ export const register = async (req, res) => {
 };
 
 /**
- * LOGIN USER
+ * LOGIN USER (SAFE ROLE-AWARE AUTH)
  */
 export const login = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, role } = req.body;
 
   try {
     if (!username || !password) {
@@ -106,15 +86,13 @@ export const login = async (req, res) => {
 
     const cleanUsername = username.trim().toLowerCase();
 
-    // ----------------------------
-    // FIND USER
-    // ----------------------------
     const userResult = await AppDataSource.query(
       'SELECT * FROM users WHERE username = $1',
       [cleanUsername]
     );
 
     const rows = userResult?.rows || userResult;
+
     if (rows.length === 0) {
       return res.status(401).json({
         message: "Invalid credentials"
@@ -123,9 +101,6 @@ export const login = async (req, res) => {
 
     const user = rows[0];
 
-    // ----------------------------
-    // VERIFY PASSWORD
-    // ----------------------------
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
@@ -134,9 +109,17 @@ export const login = async (req, res) => {
       });
     }
 
-    // ----------------------------
-    // JWT SECRET CHECK
-    // ----------------------------
+    // ROLE CHECK (ONLY IF ROLE IS PROVIDED)
+    if (role) {
+      const selectedRole = role.toUpperCase();
+
+      if (user.role !== selectedRole) {
+        return res.status(403).json({
+          message: "Access denied for selected role"
+        });
+      }
+    }
+
     if (!process.env.JWT_SECRET) {
       throw new Error("JWT_SECRET is not defined in environment variables");
     }

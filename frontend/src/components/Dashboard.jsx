@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // 🟢 FIXED: Added missing useEffect import for state sync
+import { useState, useEffect } from 'react'; 
 import { useAuth, useAppointments } from '../context/useContextHooks'; 
 import { ROLES, STATUS } from '../context/AuthTypes'; 
 import {
@@ -23,26 +23,19 @@ import AdminPanel from './AdminPanel';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  // 🟢 FIXED: Added fetchAppointments to refresh data in real-time
+
   const { appointments = [], fetchAppointments } = useAppointments(); 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  /**
-   * 🟢 FIXED: Master Synchronization Lifecycle Hook
-   * Pulls the latest records from the server when mounting, or when switching views.
-   */
+ 
   useEffect(() => {
     if (user && typeof fetchAppointments === 'function') {
       fetchAppointments();
     }
   }, [user, activeTab, fetchAppointments]);
 
-  /**
-   * 🟢 FIXED: Fallback-Aware Filtering Matrix
-   * Safely checks all spelling formats and runs string operations safely
-   */
   const myAppointments = appointments.filter(a => {
     if (!user) return false;
     
@@ -60,7 +53,6 @@ const Dashboard = () => {
     return true; // Admins view all statistics
   });
 
-  // 🟢 FIXED: Converted status values to uppercase for exact match against context types
   const stats = {
     total:     myAppointments.length,
     pending:   myAppointments.filter(a => (a.status || '').toUpperCase() === STATUS.PENDING).length,

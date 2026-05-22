@@ -1,5 +1,3 @@
-// frontend/src/context/AuthTypes.js
-
 export const STATUS = {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',

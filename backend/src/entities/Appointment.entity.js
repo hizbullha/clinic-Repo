@@ -1,4 +1,3 @@
-// backend/src/entities/Appointment.entity.js
 import { EntitySchema } from "typeorm";
 
 export const AppointmentEntity = new EntitySchema({

@@ -13,9 +13,6 @@ const AdminPanel = () => {
 
   const [selectedSpecialty, setSelectedSpecialty] = useState('ALL');
 
-  /**
-   * LOAD DOCTORS
-   */
   const loadDoctorsList = async () => {
     const token = localStorage.getItem('clinic_jwt_token');
 
@@ -36,9 +33,7 @@ const AdminPanel = () => {
     }
   };
 
-  /**
-   * INIT
-   */
+
   useEffect(() => {
     const initPanel = async () => {
       setLoading(true);
@@ -49,9 +44,7 @@ const AdminPanel = () => {
     initPanel();
   }, []);
 
-  /**
-   * DELETE DOCTOR
-   */
+ 
   const handleDeleteClick = async (id, name) => {
     const confirmDelete = window.confirm(
       `Are you sure you want to remove ${name}?`
@@ -88,9 +81,7 @@ const AdminPanel = () => {
     }
   };
 
-  /**
-   * 🟢 EXTRACT SPECIALTY FROM NAME (SAFE PARSER)
-   */
+
   const getSpecialty = (doc) => {
     const name = doc.name || '';
 
@@ -100,9 +91,7 @@ const AdminPanel = () => {
     return 'General Physician';
   };
 
-  /**
-   * FILTER DOCTORS
-   */
+
   const filteredDoctors =
     selectedSpecialty === 'ALL'
       ? doctors

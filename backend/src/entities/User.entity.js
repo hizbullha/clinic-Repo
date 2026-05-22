@@ -1,8 +1,4 @@
-// backend/src/entities/User.entity.js
 import { EntitySchema } from "typeorm";
-
-// Ideology: Since we are using pure ES6 JavaScript (not TypeScript), we use TypeORM's 
-// EntitySchema layout design. It works exactly like decorators but is fully native to plain JS.
 export const UserEntity = new EntitySchema({
   name: "User",
   tableName: "users",

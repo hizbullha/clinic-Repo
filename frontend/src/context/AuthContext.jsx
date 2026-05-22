@@ -1,4 +1,3 @@
-// frontend/src/context/AuthContext.jsx
 import { useState, useEffect } from 'react';
 import { AuthContext } from './ContextInstances';
 

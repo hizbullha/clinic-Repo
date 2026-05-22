@@ -51,10 +51,7 @@ const AppointmentList = () => {
     }
   };
 
-  /**
-   * Robust, Fallback-Aware Role Filtering Logic
-   * Safely captures doctorName and patientName regardless of capitalization or underscores.
-   */
+ 
   const visible = appointments.filter(a => {
     if (!user) return false;
     
@@ -69,10 +66,10 @@ const AppointmentList = () => {
     if (user.role === ROLES.PATIENT) {
       return patName === cleanUser || (pId && String(pId) === String(user.id));
     }
-    return true; // Admins view all records across the system
+    return true; 
   });
 
-  // Apply search query constraints
+ 
   const filtered = visible.filter(a => {
     const currentStatus = (a.status || '').toUpperCase();
     const matchStatus = filter === 'ALL' || currentStatus === filter.toUpperCase();
@@ -86,7 +83,7 @@ const AppointmentList = () => {
     return matchStatus && matchSearch;
   });
 
-  // Pagination Math Layouts
+
   const totalPages  = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safePage    = Math.min(currentPage, totalPages);
   const currentItems = filtered.slice((safePage - 1) * ITEMS_PER_PAGE, safePage * ITEMS_PER_PAGE);
@@ -99,7 +96,7 @@ const AppointmentList = () => {
   const canComplete = (a) => user?.role === ROLES.DOCTOR   && (a.status || '').toUpperCase() === STATUS.CONFIRMED;
   const canCancel   = (a) => (a.status || '').toUpperCase() !== STATUS.CANCELLED && (a.status || '').toUpperCase() !== STATUS.COMPLETED;
   const canEdit     = (a) => user?.role === ROLES.PATIENT   && (a.status || '').toUpperCase() === STATUS.PENDING;
-  const canDelete   = () => user?.role === ROLES.ADMIN; // 🟢 FIXED: Corrected syntax token arrow conversion loop
+  const canDelete   = () => user?.role === ROLES.ADMIN; 
 
   if (authLoading) {
     return (
@@ -123,7 +120,6 @@ const AppointmentList = () => {
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
-        {/* Filter and Search Layout Rows */}
         <div className="toolbar">
           <div className="filter-tabs">
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', marginRight: '8px' }}>
@@ -156,7 +152,7 @@ const AppointmentList = () => {
           Showing <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{filtered.length}</span> {filtered.length === 1 ? 'appointment' : 'appointments'}
         </p>
 
-        {/* Appointment Cards Display Grids */}
+        
         <div className="appt-grid">
           <AnimatePresence mode="popLayout">
             {currentItems.length > 0 ? currentItems.map((app, i) => {
@@ -248,7 +244,7 @@ const AppointmentList = () => {
           </AnimatePresence>
         </div>
 
-        {/* Footer Navigation Controls */}
+     
         {totalPages > 1 && (
           <div className="pagination">
             <button type="button" disabled={safePage === 1} onClick={() => setCurrentPage(p => p - 1)} className="page-btn">

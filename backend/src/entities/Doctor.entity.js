@@ -1,4 +1,3 @@
-// backend/src/entities/Doctor.entity.js
 import { EntitySchema } from "typeorm";
 
 export const DoctorEntity = new EntitySchema({
