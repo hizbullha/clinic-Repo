@@ -33,6 +33,17 @@ npm run dev
 ### 4. Run frontend
 npm run dev
 
+### Admin Login ########
+For the admin privileges, make sure to manually seed the admin role and credentials into the database
+
+INSERT INTO users (username, password_hash, name, role)
+VALUES (
+  'admin',
+  '$2a$10$YOUR_HASHED_PASSWORD_HERE',
+  'System Administrator',
+  'ADMIN'
+);
+Use the above provided method to put in SQL query into database for admin and use the hashed password for it.
 ---
 
 ## Features
