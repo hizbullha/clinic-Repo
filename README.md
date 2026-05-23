@@ -8,7 +8,7 @@ A full-stack clinic appointment management system that allows doctors and staff 
 # Tech Stack
 - Frontend: React
 - Backend: Node.js + Express
-- Database: MongoDB / PostgreSQL (choose yours)
+- Database: PostgreSQL (choose yours)
 
 ---
 
